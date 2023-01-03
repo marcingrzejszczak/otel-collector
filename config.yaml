@@ -1,0 +1,36 @@
+receivers:
+
+  # Collect own metrics
+  prometheus:
+    config:
+      scrape_configs:
+      - job_name: 'otel-collector'
+        metrics_path: '/actuator/prometheus'
+        scrape_interval: 10s
+        static_configs:
+        - targets: ['192.168.68.116:7654']
+
+  zipkin:
+
+processors:
+  batch:
+
+exporters:
+  prometheusremotewrite:
+    endpoint: http://host.docker.internal:5432/api/v1/write
+  zipkin:
+    endpoint: http://host.docker.internal:6543/api/v2/spans
+
+service:
+
+  pipelines:
+
+    traces:
+      receivers: [zipkin]
+      processors: [batch]
+      exporters: [zipkin]
+
+    metrics:
+      receivers: [prometheus]
+      processors: [batch]
+      exporters: [prometheusremotewrite]
